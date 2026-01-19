@@ -18,6 +18,7 @@ export interface UserPreferences {
     brownNoise: boolean;
     brownNoiseVolume: number; // 0-1 for Pro users
     lastDuration: number; // Last selected duration
+    darkMode: boolean;
 }
 
 const STORAGE_KEYS = {
@@ -128,6 +129,7 @@ export function getPreferences(): UserPreferences {
         brownNoise: false,
         brownNoiseVolume: 0.5,
         lastDuration: 25,
+        darkMode: false,
     };
 
     if (!data) return defaults;
