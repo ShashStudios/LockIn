@@ -1,0 +1,3 @@
+module.exports=[27572,a=>{"use strict";var b=a.i(7997);function c({children:a}){return(0,b.jsx)("html",{lang:"en",children:(0,b.jsx)("body",{className:"antialiased",children:a})})}a.s(["default",()=>c,"metadata",0,{title:"LockIn - Force Deep Focus",description:"The simplest way to force deep focus — no setup, no distractions.",keywords:["focus","productivity","timer","pomodoro","ADHD","deep work"],authors:[{name:"LockIn"}],openGraph:{title:"LockIn - Force Deep Focus",description:"The simplest way to force deep focus — no setup, no distractions.",type:"website"}}])}];
+
+//# sourceMappingURL=src_app_layout_tsx_cc8184fa._.js.map
