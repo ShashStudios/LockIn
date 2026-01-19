@@ -264,7 +264,7 @@ export default function HomePage() {
                                 opacity: loading ? 0.5 : 1
                             }}
                         >
-                            Sign in to Lock In
+                            Start
                         </button>
                     </SignInButton>
                 </SignedOut>
