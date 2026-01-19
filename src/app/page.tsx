@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, SignIn } from "@clerk/nextjs";
 import {
@@ -21,6 +21,7 @@ export default function HomePage() {
     const [showSignIn, setShowSignIn] = useState(false);
     const [typedText, setTypedText] = useState("");
     const [darkMode, setDarkMode] = useState(false);
+    const pendingStart = useRef(false);
 
     const blurbText = "Research shows that short, focused work sessions of 10-30 minutes are more effective than long marathons. Your brain stays sharp, your focus stays strong.";
 
@@ -35,6 +36,15 @@ export default function HomePage() {
             router.push("/focus");
         }
     }, [router]);
+
+    // Auto-start session after sign-in
+    useEffect(() => {
+        if (isLoaded && isSignedIn && pendingStart.current) {
+            pendingStart.current = false;
+            setShowSignIn(false);
+            startSession();
+        }
+    }, [isLoaded, isSignedIn]);
 
     // Typing animation effect
     useEffect(() => {
@@ -60,6 +70,7 @@ export default function HomePage() {
         if (!isLoaded) return;
 
         if (!isSignedIn) {
+            pendingStart.current = true;
             setShowSignIn(true);
             return;
         }
