@@ -128,32 +128,44 @@ export default function HomePage() {
                 padding: '16px 24px',
                 zIndex: 10
             }}>
-                {/* Dark mode toggle - left */}
-                <button
-                    onClick={toggleDarkMode}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 8,
-                        borderRadius: 8,
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: textSecondary,
-                        transition: 'color 0.2s'
-                    }}
-                >
-                    {darkMode ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="5" />
-                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                        </svg>
-                    ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                        </svg>
-                    )}
-                </button>
+                {/* Left side - dark mode toggle + blog link */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <button
+                        onClick={toggleDarkMode}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 8,
+                            borderRadius: 8,
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: textSecondary,
+                            transition: 'color 0.2s'
+                        }}
+                    >
+                        {darkMode ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="5" />
+                                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                            </svg>
+                        )}
+                    </button>
+                    <a
+                        href="/blog"
+                        style={{
+                            color: textSecondary,
+                            fontSize: '0.8125rem',
+                            textDecoration: 'none'
+                        }}
+                    >
+                        Blog
+                    </a>
+                </div>
 
                 {/* Profile / Sign out - right */}
                 <SignedIn>
