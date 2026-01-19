@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { useUser, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import {
     getPreferences,
     setPreferences,
@@ -12,7 +12,7 @@ import {
 
 export default function HomePage() {
     const router = useRouter();
-    const { isLoaded } = useUser();
+    const { isLoaded, isSignedIn } = useUser();
     const [duration, setDuration] = useState(15);
     const [brownNoise, setBrownNoise] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -34,6 +34,18 @@ export default function HomePage() {
             router.push("/focus");
         }
     }, [router]);
+
+    // Auto-start session on first sign-in (redirect from Clerk)
+    useEffect(() => {
+        if (isLoaded && isSignedIn && ready) {
+            // Check if we came from sign-in by looking at URL params or sessionStorage
+            const justSignedIn = sessionStorage.getItem("lockin_pending_start");
+            if (justSignedIn) {
+                sessionStorage.removeItem("lockin_pending_start");
+                startSession();
+            }
+        }
+    }, [isLoaded, isSignedIn, ready]);
 
     // Typing animation effect
     useEffect(() => {
@@ -67,6 +79,11 @@ export default function HomePage() {
         router.push("/focus");
     }, [brownNoise, duration, darkMode, router]);
 
+    const handleSignInClick = () => {
+        // Set flag so we know to start session after sign-in
+        sessionStorage.setItem("lockin_pending_start", "true");
+    };
+
     const toggleDarkMode = () => {
         const newVal = !darkMode;
         setDarkMode(newVal);
@@ -99,38 +116,63 @@ export default function HomePage() {
             padding: '4rem 2rem',
             transition: 'background 0.3s ease'
         }}>
-            {/* Dark mode toggle - top left */}
-            <button
-                onClick={toggleDarkMode}
-                style={{
-                    position: 'fixed',
-                    top: 24,
-                    left: 24,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 8,
-                    borderRadius: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    color: textSecondary,
-                    fontSize: '0.875rem',
-                    transition: 'color 0.2s',
-                    zIndex: 10
-                }}
-            >
-                {darkMode ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="5" />
-                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                    </svg>
-                ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                )}
-            </button>
+            {/* Top bar with dark mode toggle and profile */}
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px 24px',
+                zIndex: 10
+            }}>
+                {/* Dark mode toggle - left */}
+                <button
+                    onClick={toggleDarkMode}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 8,
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: textSecondary,
+                        transition: 'color 0.2s'
+                    }}
+                >
+                    {darkMode ? (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="5" />
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                        </svg>
+                    ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                    )}
+                </button>
+
+                {/* Profile / Sign out - right */}
+                <SignedIn>
+                    <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                            elements: {
+                                avatarBox: {
+                                    width: 36,
+                                    height: 36
+                                }
+                            }
+                        }}
+                    />
+                </SignedIn>
+                <SignedOut>
+                    <div style={{ width: 36 }} /> {/* Spacer for alignment */}
+                </SignedOut>
+            </div>
 
             <div style={{ width: '100%', maxWidth: 520, textAlign: 'center' }} className="fade-in">
                 <h1 style={{
@@ -246,6 +288,7 @@ export default function HomePage() {
                 <SignedOut>
                     <SignInButton mode="modal" forceRedirectUrl="/">
                         <button
+                            onClick={handleSignInClick}
                             disabled={loading}
                             style={{
                                 display: 'inline-flex',
@@ -290,7 +333,7 @@ export default function HomePage() {
                             opacity: loading ? 0.5 : 1
                         }}
                     >
-                        Lock In
+                        Start
                     </button>
                 </SignedIn>
 
