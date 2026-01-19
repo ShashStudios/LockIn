@@ -157,3 +157,121 @@ export function getRemainingTime(session: ActiveSession): number {
 export function isSessionComplete(session: ActiveSession): boolean {
     return getRemainingTime(session) <= 0;
 }
+
+// ============ STATS HELPER FUNCTIONS ============
+
+export interface DailyContribution {
+    date: string; // YYYY-MM-DD
+    minutes: number;
+    sessions: number;
+}
+
+export interface UserStats {
+    totalMinutes: number;
+    totalSessions: number;
+    completedSessions: number;
+    quitCount: number;
+    currentStreak: number;
+    longestStreak: number;
+}
+
+// Get daily contributions for the last 365 days (for the GitHub-style graph)
+export function getDailyContributions(): DailyContribution[] {
+    const history = getHistory();
+    const contributions: Map<string, DailyContribution> = new Map();
+
+    // Initialize all days in the last 365 days with 0
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split("T")[0];
+        contributions.set(dateStr, { date: dateStr, minutes: 0, sessions: 0 });
+    }
+
+    // Fill in actual data from history
+    history.forEach((entry) => {
+        const dateStr = entry.date.split("T")[0];
+        if (contributions.has(dateStr)) {
+            const existing = contributions.get(dateStr)!;
+            existing.minutes += entry.duration;
+            existing.sessions += 1;
+        }
+    });
+
+    // Convert to array and sort by date (oldest first)
+    return Array.from(contributions.values()).sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+}
+
+// Calculate user stats from history
+export function getStats(): UserStats {
+    const history = getHistory();
+
+    const totalMinutes = history.reduce((sum, entry) => sum + entry.duration, 0);
+    const totalSessions = history.length;
+    const completedSessions = history.filter((entry) => entry.completed).length;
+    const quitCount = history.filter((entry) => !entry.completed).length;
+
+    // Calculate streaks
+    const completedDates = new Set(
+        history
+            .filter((entry) => entry.completed)
+            .map((entry) => entry.date.split("T")[0])
+    );
+
+    let currentStreak = 0;
+    let longestStreak = 0;
+    let tempStreak = 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Calculate current streak (consecutive days including today or yesterday)
+    for (let i = 0; i < 365; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const dateStr = checkDate.toISOString().split("T")[0];
+
+        if (completedDates.has(dateStr)) {
+            if (i === 0 || i === 1 || currentStreak > 0) {
+                currentStreak++;
+            }
+        } else if (i > 0) {
+            // Break streak (but allow today to be missing)
+            break;
+        }
+    }
+
+    // Calculate longest streak
+    const sortedDates = Array.from(completedDates).sort();
+    for (let i = 0; i < sortedDates.length; i++) {
+        if (i === 0) {
+            tempStreak = 1;
+        } else {
+            const prevDate = new Date(sortedDates[i - 1]);
+            const currDate = new Date(sortedDates[i]);
+            const diffDays = Math.round(
+                (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            if (diffDays === 1) {
+                tempStreak++;
+            } else {
+                tempStreak = 1;
+            }
+        }
+        longestStreak = Math.max(longestStreak, tempStreak);
+    }
+
+    return {
+        totalMinutes,
+        totalSessions,
+        completedSessions,
+        quitCount,
+        currentStreak,
+        longestStreak,
+    };
+}
+

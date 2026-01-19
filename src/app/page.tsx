@@ -169,17 +169,29 @@ export default function HomePage() {
 
                 {/* Profile / Sign out - right */}
                 <SignedIn>
-                    <UserButton
-                        afterSignOutUrl="/"
-                        appearance={{
-                            elements: {
-                                avatarBox: {
-                                    width: 36,
-                                    height: 36
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <a
+                            href="/profile"
+                            style={{
+                                color: textSecondary,
+                                fontSize: '0.8125rem',
+                                textDecoration: 'none'
+                            }}
+                        >
+                            Profile
+                        </a>
+                        <UserButton
+                            afterSignOutUrl="/"
+                            appearance={{
+                                elements: {
+                                    avatarBox: {
+                                        width: 36,
+                                        height: 36
+                                    }
                                 }
-                            }
-                        }}
-                    />
+                            }}
+                        />
+                    </div>
                 </SignedIn>
                 <SignedOut>
                     <div style={{ width: 36 }} /> {/* Spacer for alignment */}
