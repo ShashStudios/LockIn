@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, SignIn } from "@clerk/nextjs";
+import { useUser, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import {
     getPreferences,
     setPreferences,
@@ -12,16 +12,14 @@ import {
 
 export default function HomePage() {
     const router = useRouter();
-    const { isSignedIn, isLoaded } = useUser();
+    const { isLoaded } = useUser();
     const [duration, setDuration] = useState(15);
     const [brownNoise, setBrownNoise] = useState(false);
     const [loading, setLoading] = useState(false);
     const [ready, setReady] = useState(false);
     const [showBlurb, setShowBlurb] = useState(false);
-    const [showSignIn, setShowSignIn] = useState(false);
     const [typedText, setTypedText] = useState("");
     const [darkMode, setDarkMode] = useState(false);
-    const pendingStart = useRef(false);
 
     const blurbText = "Research shows that short, focused work sessions of 10-30 minutes are more effective than long marathons. Your brain stays sharp, your focus stays strong.";
 
@@ -36,15 +34,6 @@ export default function HomePage() {
             router.push("/focus");
         }
     }, [router]);
-
-    // Auto-start session after sign-in
-    useEffect(() => {
-        if (isLoaded && isSignedIn && pendingStart.current) {
-            pendingStart.current = false;
-            setShowSignIn(false);
-            startSession();
-        }
-    }, [isLoaded, isSignedIn]);
 
     // Typing animation effect
     useEffect(() => {
@@ -66,19 +55,7 @@ export default function HomePage() {
         return () => clearInterval(interval);
     }, [showBlurb]);
 
-    const handleLockIn = () => {
-        if (!isLoaded) return;
-
-        if (!isSignedIn) {
-            pendingStart.current = true;
-            setShowSignIn(true);
-            return;
-        }
-
-        startSession();
-    };
-
-    const startSession = () => {
+    const startSession = useCallback(() => {
         setLoading(true);
         setPreferences({ brownNoise, lastDuration: duration, darkMode });
         setActiveSession({
@@ -88,7 +65,7 @@ export default function HomePage() {
             brownNoise,
         });
         router.push("/focus");
-    };
+    }, [brownNoise, duration, darkMode, router]);
 
     const toggleDarkMode = () => {
         const newVal = !darkMode;
@@ -101,7 +78,7 @@ export default function HomePage() {
     const textSecondary = darkMode ? "#A0A0A0" : "#6B6B6B";
     const border = darkMode ? "#333" : "#E5E5E3";
 
-    if (!ready) {
+    if (!ready || !isLoaded) {
         return (
             <div style={{
                 minHeight: '100vh', background: bg,
@@ -265,28 +242,57 @@ export default function HomePage() {
                     <span style={{ fontSize: '1rem', color: textSecondary }}>Brown noise</span>
                 </div>
 
-                <button
-                    onClick={handleLockIn}
-                    disabled={loading || !isLoaded}
-                    style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: 56,
-                        padding: '0 40px',
-                        background: text,
-                        color: bg,
-                        fontSize: '1.0625rem',
-                        fontWeight: 500,
-                        border: 'none',
-                        borderRadius: 14,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        opacity: loading ? 0.5 : 1
-                    }}
-                >
-                    Lock In
-                </button>
+                {/* Show different buttons based on auth state */}
+                <SignedOut>
+                    <SignInButton mode="modal" forceRedirectUrl="/">
+                        <button
+                            disabled={loading}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minHeight: 56,
+                                padding: '0 40px',
+                                background: text,
+                                color: bg,
+                                fontSize: '1.0625rem',
+                                fontWeight: 500,
+                                border: 'none',
+                                borderRadius: 14,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                opacity: loading ? 0.5 : 1
+                            }}
+                        >
+                            Sign in to Lock In
+                        </button>
+                    </SignInButton>
+                </SignedOut>
+
+                <SignedIn>
+                    <button
+                        onClick={startSession}
+                        disabled={loading}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minHeight: 56,
+                            padding: '0 40px',
+                            background: text,
+                            color: bg,
+                            fontSize: '1.0625rem',
+                            fontWeight: 500,
+                            border: 'none',
+                            borderRadius: 14,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            opacity: loading ? 0.5 : 1
+                        }}
+                    >
+                        Lock In
+                    </button>
+                </SignedIn>
 
                 <p style={{
                     marginTop: 32,
@@ -297,58 +303,12 @@ export default function HomePage() {
                 </p>
             </div>
 
-            {/* Clerk Sign In Modal */}
-            {showSignIn && (
-                <div style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 24,
-                    zIndex: 100
-                }}>
-                    <div style={{ position: 'relative' }}>
-                        <button
-                            onClick={() => setShowSignIn(false)}
-                            style={{
-                                position: 'absolute',
-                                top: -48,
-                                right: 0,
-                                background: 'none',
-                                border: 'none',
-                                color: '#FFF',
-                                cursor: 'pointer',
-                                padding: 8,
-                                fontSize: '0.9375rem'
-                            }}
-                        >
-                            Cancel
-                        </button>
-                        <SignIn
-                            afterSignInUrl="/"
-                            afterSignUpUrl="/"
-                            appearance={{
-                                elements: {
-                                    rootBox: {
-                                        boxShadow: '0 25px 60px rgba(0,0,0,0.3)'
-                                    }
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-            )}
-
             <style jsx>{`
-        @keyframes blink {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0; }
-        }
-      `}</style>
+                @keyframes blink {
+                    0%, 50% { opacity: 1; }
+                    51%, 100% { opacity: 0; }
+                }
+            `}</style>
         </div>
     );
 }
